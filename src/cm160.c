@@ -33,6 +33,7 @@
 #include "usb_utils.h"
 #include "db.h"
 #include "demonize.h"
+#include <time.h>
 
 static char ID_MSG[11] = { 
       0xA9, 0x49, 0x44, 0x54, 0x43, 0x4D, 0x56, 0x30, 0x30, 0x31, 0x01 };
@@ -83,10 +84,13 @@ static void process_live_data(struct record_data *rec)
 
 static void decode_frame(unsigned char *frame, struct record_data *rec)
 {
+  time_t t = time(NULL);
+  struct tm tm = *localtime(&t);
   int volt = 230; // TODO: use the value from energy_param table (supply_voltage)
   rec->addr = 0; // TODO: don't use an harcoded addr value for the device...
   rec->year = frame[1]+2000;
-  rec->month = frame[2];
+  rec->month = tm.tm_mon +1;
+  //rec->month = frame[2];
   rec->day = frame[3];
   rec->hour = frame[4];
   rec->min = frame[5];
@@ -148,13 +152,13 @@ static int process_frame(int dev_id, unsigned char *frame)
 
   if(strncmp((char *)frame, ID_MSG, 11) == 0)
   {
-//    printf("received ID MSG\n");
+    //printf("received ID MSG\n");
     data[0]=0x5A;
     usb_bulk_write(hdev, epout, (const char *)&data, sizeof(data), 1000);
   }
   else if(strncmp((char *)frame, WAIT_MSG, 11) == 0)
   {
-//    printf("received WAIT MSG\n");
+    //printf("received WAIT MSG\n");
     data[0]=0xA5;
     usb_bulk_write(hdev, epout, (const char *)&data, sizeof(data), 1000);
   }
